@@ -8,22 +8,22 @@ const CalendarGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
-  background-color: #2a2a2a; // Darker grid background
-  border: 1px solid #3a3a3a; // Darker border
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
 `
 
-const CalendarCell = styled.div<{ $isCurrentMonth: boolean; $hasEvent: boolean }>`
+const CalendarCell = styled.div<{ $isCurrentMonth: boolean; $hasEvent: boolean; $isHighlighted: boolean }>`
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: ${props => props.$isCurrentMonth ? '#1e1e1e' : '#0f0f0f'}; // Darker cell backgrounds
-  color: ${props => props.$isCurrentMonth ? '#ffffff' : '#808080'}; // Lighter text for current month, gray for other months
+  background-color: ${props => props.$isCurrentMonth ? '#1e1e1e' : '#0f0f0f'};
+  color: ${props => props.$isCurrentMonth ? '#ffffff' : '#808080'};
   cursor: pointer;
   position: relative;
 
   &:hover {
-    background-color: #2c2c2c; // Darker hover color
+    background-color: #2c2c2c;
   }
 
   ${props => props.$hasEvent && `
@@ -36,8 +36,13 @@ const CalendarCell = styled.div<{ $isCurrentMonth: boolean; $hasEvent: boolean }
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background-color: #4caf50; // Green dot for events
+      background-color: #4caf50;
     }
+  `}
+
+  ${props => props.$isHighlighted && `
+    border: 2px solid var(--bs-info);
+    background-color: ${props.$isCurrentMonth ? '#2a2a2a' : '#1a1a1a'};
   `}
 `
 
@@ -86,6 +91,7 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect }) => {
             key={date.toString()}
             $isCurrentMonth={isSameMonth(date, currentDate)}
             $hasEvent={hasEvent(date)}
+            $isHighlighted={hasEvent(date)}
             onClick={() => handleDateClick(date)}
           >
             {format(date, 'd')}
