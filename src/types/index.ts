@@ -5,4 +5,5 @@ export interface Event {
   time: string
   recurring: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
   customDates: string[]
+  recurrenceEndDate?: string
 }

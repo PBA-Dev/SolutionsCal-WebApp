@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { useEvents } from '../hooks/useLocalStorage'
 import { Event } from '../types'
 import { useAuth } from '../contexts/AuthContext'
+import { addDays, addWeeks, addMonths, format } from 'date-fns'
 
 const AdminContainer = styled.div`
   margin-top: 20px;
@@ -34,15 +35,74 @@ const MenuItem = styled.button`
 
 const AdminInterface: React.FC = () => {
   const [events, setEvents] = useEvents()
-  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({ title: '', date: '', time: '', recurring: 'none', customDates: [] })
+  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({ 
+    title: '', 
+    date: '', 
+    time: '', 
+    recurring: 'none', 
+    customDates: [],
+    recurrenceEndDate: ''
+  })
   const [activeSection, setActiveSection] = useState<'add' | 'manage' | 'password'>('add')
   const { logout } = useAuth()
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault()
     const id = Date.now().toString()
-    setEvents([...events, { ...newEvent, id }])
-    setNewEvent({ title: '', date: '', time: '', recurring: 'none', customDates: [] })
+    const generatedEvents = generateRecurringEvents({ ...newEvent, id })
+    setEvents([...events, ...generatedEvents])
+    setNewEvent({ 
+      title: '', 
+      date: '', 
+      time: '', 
+      recurring: 'none', 
+      customDates: [],
+      recurrenceEndDate: ''
+    })
+  }
+
+  const generateRecurringEvents = (event: Event): Event[] => {
+    const events = [event]
+    if (event.recurring === 'none') return events
+
+    const startDate = new Date(`${event.date}T${event.time}`)
+    const endDate = event.recurrenceEndDate ? new Date(event.recurrenceEndDate) : addMonths(startDate, 3)
+
+    let currentDate = startDate
+    while (currentDate <= endDate) {
+      if (event.recurring === 'daily') {
+        currentDate = addDays(currentDate, 1)
+      } else if (event.recurring === 'weekly') {
+        currentDate = addWeeks(currentDate, 1)
+      } else if (event.recurring === 'monthly') {
+        currentDate = addMonths(currentDate, 1)
+      } else if (event.recurring === 'custom') {
+        break // Custom dates are handled separately
+      }
+
+      if (currentDate <= endDate) {
+        events.push({
+          ...event,
+          id: `${event.id}-${format(currentDate, 'yyyyMMdd')}`,
+          date: format(currentDate, 'yyyy-MM-dd'),
+          time: format(currentDate, 'HH:mm')
+        })
+      }
+    }
+
+    if (event.recurring === 'custom') {
+      event.customDates.forEach((customDate, index) => {
+        if (new Date(customDate) <= endDate) {
+          events.push({
+            ...event,
+            id: `${event.id}-custom-${index}`,
+            date: customDate,
+          })
+        }
+      })
+    }
+
+    return events
   }
 
   const handleDeleteEvent = (id: string) => {
@@ -92,7 +152,7 @@ const AdminInterface: React.FC = () => {
         <select
           className="form-control bg-dark text-light"
           value={newEvent.recurring}
-          onChange={e => setNewEvent({ ...newEvent, recurring: e.target.value })}
+          onChange={e => setNewEvent({ ...newEvent, recurring: e.target.value as Event['recurring'] })}
         >
           <option value="none">No Recurrence</option>
           <option value="daily">Daily</option>
@@ -101,12 +161,24 @@ const AdminInterface: React.FC = () => {
           <option value="custom">Custom</option>
         </select>
       </div>
+      {newEvent.recurring !== 'none' && newEvent.recurring !== 'custom' && (
+        <div className="mb-2">
+          <label htmlFor="recurrenceEndDate" className="form-label">Recurrence End Date</label>
+          <input
+            type="date"
+            id="recurrenceEndDate"
+            className="form-control bg-dark text-light"
+            value={newEvent.recurrenceEndDate}
+            onChange={e => setNewEvent({ ...newEvent, recurrenceEndDate: e.target.value })}
+          />
+        </div>
+      )}
       {newEvent.recurring === 'custom' && (
         <div className="mb-2">
           <input
             type="text"
             className="form-control bg-dark text-light"
-            placeholder="Custom Dates (comma-separated)"
+            placeholder="Custom Dates (comma-separated YYYY-MM-DD)"
             value={newEvent.customDates.join(',')}
             onChange={e => setNewEvent({ ...newEvent, customDates: e.target.value.split(',') })}
           />
@@ -120,7 +192,7 @@ const AdminInterface: React.FC = () => {
     <ul className="list-group">
       {events.map((event: Event) => (
         <li key={event.id} className="list-group-item d-flex justify-content-between align-items-center bg-dark text-light">
-          <span>{event.title} - {event.date} {event.time}</span>
+          <span>{event.title} - {event.date} {event.time} (Recurring: {event.recurring})</span>
           <div>
             <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleDuplicateEvent(event)}>Duplicate</button>
             <button className="btn btn-sm btn-outline-warning me-2" onClick={() => {
