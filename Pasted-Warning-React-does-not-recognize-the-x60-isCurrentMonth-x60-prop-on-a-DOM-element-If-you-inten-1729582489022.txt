@@ -1,0 +1,22 @@
+Warning: React does not recognize the &#x60;isCurrentMonth&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;iscurrentmonth&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at div
+    at Calendar (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/components/Calendar.tsx:59:21)
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at App (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/App.tsx:33:43)
+    at AuthProvider (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/contexts/AuthContext.tsx:29:32)
+Warning: React does not recognize the &#x60;hasEvent&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;hasevent&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at div
+    at Calendar (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/components/Calendar.tsx:59:21)
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/node_modules/.vite/deps/styled-components.js?v=35e7d55b:1211:6)
+    at App (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/App.tsx:33:43)
+    at AuthProvider (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev:5000/src/contexts/AuthContext.tsx:29:32)
