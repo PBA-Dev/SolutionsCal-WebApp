@@ -28,8 +28,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (username: string, password: string) => {
-    // Try multiple ways to access the environment variable
-    const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+    const adminPassword = import.meta.env.ADMIN_PASSWORD;
     
     console.log('Environment check:');
     console.log('- Environment mode:', import.meta.env.MODE);
@@ -50,13 +49,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    console.log('Logging out user');
     setIsAdmin(false);
-    try {
-      localStorage.removeItem('isAdmin');
-    } catch (error) {
-      console.error('Error removing auth state:', error);
-    }
+    localStorage.removeItem('isAdmin');
   };
 
   const contextValue: AuthContextType = {

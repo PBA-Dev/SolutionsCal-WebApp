@@ -21,16 +21,10 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     minify: 'terser',
-    sourcemap: true, // Enable sourcemaps for debugging
-    rollupOptions: {
-      output: {
-        manualChunks: undefined // Disable code splitting for simpler debugging
-      }
-    }
+    sourcemap: true
   },
   define: {
     'import.meta.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD),
-    'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV || 'production'),
-    'process.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD)
+    'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV || 'production')
   }
 }) as UserConfig
