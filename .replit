@@ -27,7 +27,6 @@ waitForPort = 5173
 [deployment]
 deploymentTarget = "static"
 publicDir = "dist"
-run = ["sh", "-c", "npm run dev"]
 
 [nix]
 channel = "stable-24_05"

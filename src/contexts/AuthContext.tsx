@@ -8,15 +8,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -32,26 +28,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (username: string, password: string) => {
-    // Get the admin password from the environment variable that was injected during build
-    const adminPassword = (import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD) as string;
+    const adminPassword = import.meta.env.ADMIN_PASSWORD;
+    console.log('Checking authentication...'); // Add logging for debugging
     
     if (!adminPassword) {
-      console.error('Admin password not configured in environment');
-      alert('System configuration error: Please contact administrator');
+      console.error('Admin password not configured');
+      alert('System configuration error');
       return;
     }
 
     if (username.trim() === '') {
+      console.error('Login attempt with empty username');
       alert('Username is required');
       return;
     }
 
     if (password.trim() === '') {
+      console.error('Login attempt with empty password');
       alert('Password is required');
       return;
     }
 
     if (username === 'admin' && password === adminPassword) {
+      console.log('Authentication successful');
       setIsAdmin(true);
       try {
         localStorage.setItem('isAdmin', JSON.stringify(true));
@@ -59,11 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error storing auth state:', error);
       }
     } else {
+      console.error('Authentication failed: Invalid credentials');
       alert('Invalid credentials');
     }
   };
 
   const logout = () => {
+    console.log('Logging out user');
     setIsAdmin(false);
     try {
       localStorage.removeItem('isAdmin');
@@ -72,11 +73,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const contextValue: AuthContextType = {
+    isAdmin,
+    login,
+    logout
+  };
+
   return (
-    <AuthContext.Provider value={{ isAdmin, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export default AuthProvider;
+function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+export { AuthProvider, useAuth };
