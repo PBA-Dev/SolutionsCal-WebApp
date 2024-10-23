@@ -24,6 +24,7 @@ export default defineConfig({
     sourcemap: false
   },
   define: {
+    'process.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD),
     'import.meta.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD)
   }
 }) as UserConfig

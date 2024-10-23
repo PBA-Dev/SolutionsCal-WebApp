@@ -28,11 +28,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (username: string, password: string) => {
-    const adminPassword = import.meta.env.ADMIN_PASSWORD;
-    console.log('Checking authentication...'); // Add logging for debugging
+    // Try both environment variable access methods
+    const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+    console.log('Environment check: Admin password configured:', !!adminPassword);
+    console.log('Environment mode:', import.meta.env.MODE);
     
     if (!adminPassword) {
-      console.error('Admin password not configured');
+      console.error('Admin password not configured in environment');
       alert('System configuration error');
       return;
     }
