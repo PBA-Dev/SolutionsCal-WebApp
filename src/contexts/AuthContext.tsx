@@ -27,7 +27,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const login = (username: string, password: string) => {
-    if (username === 'admin' && password === 'password') {
+    // Check against environment variable ADMIN_PASSWORD
+    if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
       setIsAdmin(true)
       localStorage.setItem('isAdmin', JSON.stringify(true))
     } else {
