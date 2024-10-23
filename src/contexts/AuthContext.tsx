@@ -28,42 +28,23 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (username: string, password: string) => {
-    console.log('Login attempt - Environment:', import.meta.env.MODE);
-    const adminPassword = import.meta.env.ADMIN_PASSWORD;
+    // Try multiple ways to access the environment variable
+    const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
     
-    // Add more detailed environment checks
-    console.log('Environment variable check:');
-    console.log('- Using import.meta.env:', !!import.meta.env.ADMIN_PASSWORD);
+    console.log('Environment check:');
     console.log('- Environment mode:', import.meta.env.MODE);
+    console.log('- Password configured:', !!adminPassword);
     
     if (!adminPassword) {
-      console.error('Admin password not configured in environment');
+      console.error('Admin password not configured');
       alert('System configuration error');
       return;
     }
 
-    if (username.trim() === '') {
-      console.error('Login attempt with empty username');
-      alert('Username is required');
-      return;
-    }
-
-    if (password.trim() === '') {
-      console.error('Login attempt with empty password');
-      alert('Password is required');
-      return;
-    }
-
     if (username === 'admin' && password === adminPassword) {
-      console.log('Authentication successful');
       setIsAdmin(true);
-      try {
-        localStorage.setItem('isAdmin', JSON.stringify(true));
-      } catch (error) {
-        console.error('Error storing auth state:', error);
-      }
+      localStorage.setItem('isAdmin', JSON.stringify(true));
     } else {
-      console.error('Authentication failed: Invalid credentials');
       alert('Invalid credentials');
     }
   };
