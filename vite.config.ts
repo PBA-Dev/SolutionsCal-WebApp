@@ -23,6 +23,9 @@ export default defineConfig({
     sourcemap: false
   },
   define: {
-    'process.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD)
+    'process.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD),
+    'process.env': {
+      ADMIN_PASSWORD: JSON.stringify(process.env.ADMIN_PASSWORD)
+    }
   }
 })
