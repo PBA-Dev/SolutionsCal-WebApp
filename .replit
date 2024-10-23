@@ -12,6 +12,14 @@ author = "agent"
 task = "workflow.run"
 args = "Vite Development Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Preview"
+
 [[workflows.workflow]]
 name = "Vite Development Server"
 author = "agent"
@@ -24,9 +32,33 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5173
 
+[[workflows.workflow]]
+name = "Build"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow]]
+name = "Preview"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run preview"
+waitForPort = 5173
+
 [deployment]
 deploymentTarget = "static"
 publicDir = "dist"
+run = ["sh", "-c", "npm run build"]
 
 [nix]
 channel = "stable-24_05"
