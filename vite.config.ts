@@ -21,10 +21,21 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     minify: 'terser',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   },
   define: {
+    // Ensure environment variables are properly stringified
     'import.meta.env.ADMIN_PASSWORD': JSON.stringify(process.env.ADMIN_PASSWORD),
-    'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV || 'production')
+    'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV || 'production'),
+    // Fallback for process.env access
+    'process.env': {
+      ADMIN_PASSWORD: JSON.stringify(process.env.ADMIN_PASSWORD),
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production')
+    }
   }
 }) as UserConfig
