@@ -32,7 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (username: string, password: string) => {
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    // Get the admin password from the environment variable that was injected during build
+    const adminPassword = (import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD) as string;
     
     if (!adminPassword) {
       console.error('Admin password not configured in environment');
