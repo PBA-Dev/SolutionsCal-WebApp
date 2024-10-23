@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
-import styled from 'styled-components'
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth, isSameDay } from 'date-fns'
-import { useEvents } from '../hooks/useLocalStorage'
-import { Event } from '../types'
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth, isSameDay, getDay  } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { useEvents } from '../hooks/useLocalStorage';
+import { Event } from '../types';
 
 const CalendarGrid = styled.div`
   display: grid;
@@ -10,96 +11,88 @@ const CalendarGrid = styled.div`
   gap: 1px;
   background-color: #2a2a2a;
   border: 1px solid #3a3a3a;
-`
+`;
 
-const CalendarCell = styled.div<{ $isCurrentMonth: boolean; $hasEvent: boolean; $isHighlighted: boolean }>`
+
+const CalendarCell = styled.div<{ $isCurrentMonth: boolean; $hasEvent: boolean }>`
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: ${props => props.$isCurrentMonth ? '#1e1e1e' : '#0f0f0f'};
-  color: ${props => props.$isCurrentMonth ? '#ffffff' : '#808080'};
+  background-color: ${props => props.$hasEvent ? '#d8b4ff' : (props.$isCurrentMonth ? '#1e1e1e' : '#0f0f0f')}; /* Light purple for event days */
+  color: ${props => (props.$isCurrentMonth ? '#ffffff' : '#808080')};
   cursor: pointer;
-  position: relative;
 
   &:hover {
-    background-color: #2c2c2c;
+    background-color: ${props => props.$hasEvent ? '#b799e5' : '#2c2c2c'}; /* Slightly darker purple on hover if it has an event */
   }
-
-  ${props => props.$hasEvent && `
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background-color: #4caf50;
-    }
-  `}
-
-  ${props => props.$isHighlighted && `
-    border: 2px solid var(--bs-info);
-    background-color: ${props.$isCurrentMonth ? '#2a2a2a' : '#1a1a1a'};
-  `}
-`
+`;
 
 interface CalendarProps {
-  onDateSelect: (date: Date) => void
+  onDateSelect: (date: Date) => void;
 }
 
 const Calendar: React.FC<CalendarProps> = ({ onDateSelect }) => {
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [events] = useEvents()
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [events] = useEvents();
+
+  const firstDayOfMonth = startOfMonth(currentDate);
+  const lastDayOfMonth = endOfMonth(currentDate);
 
   const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate)
-  })
+    start: firstDayOfMonth,
+    end: lastDayOfMonth,
+  });
+
+  // Get the day of the week for the first day of the month (0 = Sunday, 1 = Monday, etc.)
+  const firstDayOfWeek = getDay(firstDayOfMonth);
 
   const hasEvent = (date: Date): boolean => {
-    return events.some((event: Event) => isSameDay(new Date(event.date), date))
-  }
-
-  const handleDateClick = (date: Date) => {
-    onDateSelect(date)
-  }
+    return events.some((event: Event) => isSameDay(new Date(event.date), date));
+  };
 
   const handleMonthChange = (increment: number) => {
     setCurrentDate(prevDate => {
-      const newDate = new Date(prevDate)
-      newDate.setMonth(newDate.getMonth() + increment)
-      return newDate
-    })
-  }
+      const newDate = new Date(prevDate);
+      newDate.setMonth(newDate.getMonth() + increment);
+      return newDate;
+    });
+  };
+  const handleDateClick = (date: Date) => {
+    onDateSelect(date); // Ensure this is called when a date is clicked
+  };
+  
 
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <button className="btn btn-outline-secondary" onClick={() => handleMonthChange(-1)}>Previous</button>
-        <h2>{format(currentDate, 'MMMM yyyy')}</h2>
+        <h2>{format(currentDate, 'MMMM yyyy', { locale: de } )}</h2>
         <button className="btn btn-outline-secondary" onClick={() => handleMonthChange(1)}>Next</button>
       </div>
       <CalendarGrid>
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map(day => (
           <div key={day} className="text-center p-2 text-light">{day}</div>
         ))}
-        {daysInMonth.map(date => (
-          <CalendarCell
-            key={date.toString()}
-            $isCurrentMonth={isSameMonth(date, currentDate)}
-            $hasEvent={hasEvent(date)}
-            $isHighlighted={hasEvent(date)}
-            onClick={() => handleDateClick(date)}
-          >
-            {format(date, 'd')}
+            {/* Empty cells for padding before the first day of the month */}
+            {Array.from({ length: firstDayOfWeek }).map((_, index) => (
+              <div key={`empty-${index}`} className="calendar-empty-cell" />
+            ))}
+
+            {/* Actual days of the month */}
+            {daysInMonth.map(date => (
+              <CalendarCell
+                key={date.toString()}
+                $isCurrentMonth={isSameMonth(date, currentDate)}
+                $hasEvent={hasEvent(date)}
+                onClick={() => handleDateClick(date)}
+              >
+                {format(date, 'd')} {/* Display day number */}
           </CalendarCell>
         ))}
       </CalendarGrid>
     </div>
-  )
-}
+  );
+};
 
-export default Calendar
+export default Calendar;

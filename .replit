@@ -25,7 +25,8 @@ args = "npm run dev"
 waitForPort = 3001
 
 [deployment]
-run = ["sh", "-c", "npm run dev"]
+deploymentTarget = "static"
+publicDir = "dist"
 
 [nix]
 channel = "stable-24_05"
