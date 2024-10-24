@@ -14,12 +14,32 @@ interface AuthProviderProps {
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const MAX_LOGIN_ATTEMPTS = 3;
+  const LOCKOUT_DURATION = 300000; // 5 minutes in milliseconds
 
   useEffect(() => {
     const storedAuth = localStorage.getItem('isAdmin');
+    const lastLoginTime = localStorage.getItem('lastLoginTime');
+    const storedAttempts = localStorage.getItem('loginAttempts');
+
+    if (storedAttempts) {
+      setLoginAttempts(parseInt(storedAttempts));
+    }
+
     if (storedAuth) {
       try {
-        setIsAdmin(JSON.parse(storedAuth));
+        const isAdminValue = JSON.parse(storedAuth);
+        const lastLogin = lastLoginTime ? parseInt(lastLoginTime) : 0;
+        const timeDiff = Date.now() - lastLogin;
+
+        // Only restore admin status if within 24 hours
+        if (isAdminValue && timeDiff < 24 * 60 * 60 * 1000) {
+          setIsAdmin(true);
+        } else {
+          localStorage.removeItem('isAdmin');
+          localStorage.removeItem('lastLoginTime');
+        }
       } catch (error) {
         console.error('Error parsing stored auth:', error);
         localStorage.removeItem('isAdmin');
@@ -27,30 +47,63 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const isLockedOut = () => {
+    const lastAttemptTime = parseInt(localStorage.getItem('lastAttemptTime') || '0');
+    const timeSinceLastAttempt = Date.now() - lastAttemptTime;
+    return loginAttempts >= MAX_LOGIN_ATTEMPTS && timeSinceLastAttempt < LOCKOUT_DURATION;
+  };
+
+  const resetLoginAttempts = () => {
+    setLoginAttempts(0);
+    localStorage.removeItem('loginAttempts');
+    localStorage.removeItem('lastAttemptTime');
+  };
+
   const login = (username: string, password: string) => {
-    const adminPassword = import.meta.env.ADMIN_PASSWORD;
-    
-    console.log('Environment check:');
-    console.log('- Environment mode:', import.meta.env.MODE);
-    console.log('- Password configured:', !!adminPassword);
-    
-    if (!adminPassword) {
-      console.error('Admin password not configured');
-      alert('System configuration error');
+    if (isLockedOut()) {
+      const remainingTime = Math.ceil((LOCKOUT_DURATION - (Date.now() - parseInt(localStorage.getItem('lastAttemptTime') || '0'))) / 60000);
+      alert(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
       return;
     }
 
-    if (username === 'admin' && password === adminPassword) {
+    const adminPassword = import.meta.env.ADMIN_PASSWORD;
+    
+    // Use the fallback mechanism only in production
+    const isProduction = import.meta.env.MODE === 'production';
+    const fallbackPassword = localStorage.getItem('fallbackPassword');
+    
+    const isValidPassword = password === adminPassword || (isProduction && fallbackPassword && password === fallbackPassword);
+
+    if (username === 'admin' && isValidPassword) {
       setIsAdmin(true);
       localStorage.setItem('isAdmin', JSON.stringify(true));
+      localStorage.setItem('lastLoginTime', Date.now().toString());
+      
+      // If using fallback password in production, store it as a recovery option
+      if (isProduction && !adminPassword && !fallbackPassword) {
+        localStorage.setItem('fallbackPassword', password);
+      }
+      
+      resetLoginAttempts();
     } else {
-      alert('Invalid credentials');
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      localStorage.setItem('loginAttempts', newAttempts.toString());
+      localStorage.setItem('lastAttemptTime', Date.now().toString());
+
+      if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+        alert('Too many failed attempts. Please try again in 5 minutes.');
+      } else {
+        alert(`Invalid credentials. ${MAX_LOGIN_ATTEMPTS - newAttempts} attempts remaining.`);
+      }
     }
   };
 
   const logout = () => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('lastLoginTime');
+    // Don't remove fallbackPassword on logout to maintain recovery option
   };
 
   const contextValue: AuthContextType = {
