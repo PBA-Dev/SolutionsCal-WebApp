@@ -4,6 +4,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (username: string, password: string) => void;
   logout: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,6 +100,31 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const changePassword = (currentPassword: string, newPassword: string): boolean => {
+    const adminPassword = import.meta.env.ADMIN_PASSWORD;
+    const isProduction = import.meta.env.MODE === 'production';
+    const fallbackPassword = localStorage.getItem('fallbackPassword');
+
+    // Verify current password matches either env variable or fallback
+    const isValidCurrentPassword = currentPassword === adminPassword || 
+      (isProduction && fallbackPassword && currentPassword === fallbackPassword);
+
+    if (!isValidCurrentPassword) {
+      alert('Current password is incorrect');
+      return false;
+    }
+
+    // In production, update the fallback password
+    if (isProduction) {
+      localStorage.setItem('fallbackPassword', newPassword);
+      alert('Password changed successfully');
+      return true;
+    }
+
+    alert('Password cannot be changed in development mode');
+    return false;
+  };
+
   const logout = () => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
@@ -109,7 +135,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const contextValue: AuthContextType = {
     isAdmin,
     login,
-    logout
+    logout,
+    changePassword
   };
 
   return (

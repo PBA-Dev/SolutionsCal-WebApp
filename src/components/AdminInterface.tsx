@@ -4,8 +4,6 @@ import { useEvents } from '../hooks/useLocalStorage'
 import { Event } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { addDays, addWeeks, addMonths, format } from 'date-fns'
-//import { de } from 'date-fns/locale'; // To use German locale
-
 
 const AdminContainer = styled.div`
   margin-top: 20px;
@@ -46,7 +44,12 @@ const AdminInterface: React.FC = () => {
     recurrenceEndDate: ''
   })
   const [activeSection, setActiveSection] = useState<'add' | 'manage' | 'password'>('add')
-  const { logout } = useAuth()
+  const { logout, changePassword } = useAuth()
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,6 +64,28 @@ const AdminInterface: React.FC = () => {
       customDates: [],
       recurrenceEndDate: ''
     })
+  }
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('New passwords do not match')
+      return
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      alert('New password must be at least 8 characters long')
+      return
+    }
+
+    if (changePassword(passwordForm.currentPassword, passwordForm.newPassword)) {
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+    }
   }
 
   const generateRecurringEvents = (event: Event): Event[] => {
@@ -209,15 +234,36 @@ const AdminInterface: React.FC = () => {
   )
 
   const renderChangePassword = () => (
-    <form className="mb-3">
+    <form onSubmit={handlePasswordChange} className="mb-3">
       <div className="mb-2">
-        <input type="password" className="form-control bg-dark text-light" placeholder="Current Password" />
+        <input
+          type="password"
+          className="form-control bg-dark text-light"
+          placeholder="Current Password"
+          value={passwordForm.currentPassword}
+          onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+          required
+        />
       </div>
       <div className="mb-2">
-        <input type="password" className="form-control bg-dark text-light" placeholder="New Password" />
+        <input
+          type="password"
+          className="form-control bg-dark text-light"
+          placeholder="New Password"
+          value={passwordForm.newPassword}
+          onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+          required
+        />
       </div>
       <div className="mb-2">
-        <input type="password" className="form-control bg-dark text-light" placeholder="Confirm New Password" />
+        <input
+          type="password"
+          className="form-control bg-dark text-light"
+          placeholder="Confirm New Password"
+          value={passwordForm.confirmPassword}
+          onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+          required
+        />
       </div>
       <button type="submit" className="btn btn-primary">Change Password</button>
     </form>
