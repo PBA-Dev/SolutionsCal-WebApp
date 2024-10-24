@@ -28,6 +28,14 @@ const PopupContent = styled.div`
   border: 1px solid #3a3a3a; // Visible border
 `;
 
+// Define EventTitle styled component for larger font size
+const EventTitle = styled.li`
+  font-size: 1.5rem; /* Increased font size for event title */
+  font-weight: bold;
+  margin-bottom: 10px;
+`;
+
+
 interface EventPopupProps {
   date: Date;
   onClose: () => void;
@@ -40,18 +48,25 @@ const EventPopup: React.FC<EventPopupProps> = ({ date, onClose }) => {
   const eventsForDate = events.filter((event: Event) => 
     format(new Date(event.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   );
-
-  return (
-    <PopupOverlay onClick={onClose}>
-      <PopupContent onClick={e => e.stopPropagation()}>
-        <h3 className="mb-3">{format(date, 'MMMM d, yyyy', { locale: de })}</h3>
-        {eventsForDate.length > 0 ? (
-          <ul className="list-group mb-3">
-            {eventsForDate.map((event: Event) => (
-              <li key={event.id} className="list-group-item bg-dark text-light">{event.title}</li>
-            ))}
-          </ul>
-        ) : (
+  
+          return (
+            <PopupOverlay onClick={onClose}>
+              <PopupContent onClick={e => e.stopPropagation()}>
+                <h3 className="mb-3">{format(date, 'MMMM d, yyyy', { locale: de })}</h3>
+                {eventsForDate.length > 0 ? (
+                  <ul className="list-group mb-3">
+                    {eventsForDate.map((event: Event) => {
+                      // Ensure date contains both date and time
+                      const eventTime = format(new Date(event.date), 'HH:mm', { locale: de }); // 24-hour time format
+                      return (
+                        <EventTitle key={event.id} className="list-group-item bg-dark text-light">
+                          {event.title} <br />
+                          <small>{eventTime}</small> {/* Display event time */}
+                        </EventTitle>
+                      );
+                    })}
+                  </ul>
+                ) : (
           <p>Keine Veranstaltungen für dieses Datum.</p>
         )}
       </PopupContent>

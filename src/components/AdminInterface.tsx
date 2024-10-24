@@ -4,6 +4,8 @@ import { useEvents } from '../hooks/useLocalStorage'
 import { Event } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { addDays, addWeeks, addMonths, format } from 'date-fns'
+//import { de } from 'date-fns/locale'; // To use German locale
+
 
 const AdminContainer = styled.div`
   margin-top: 20px;
