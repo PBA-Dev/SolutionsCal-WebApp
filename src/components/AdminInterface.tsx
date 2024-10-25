@@ -33,6 +33,19 @@ const MenuItem = styled.button`
   }
 `
 
+const TimeInputContainer = styled.div`
+  position: relative;
+  
+  .time-format-hint {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+  }
+`
+
 const AdminInterface: React.FC = () => {
   const [events, setEvents] = useEvents()
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({ 
@@ -51,8 +64,55 @@ const AdminInterface: React.FC = () => {
     confirmPassword: ''
   })
 
+  const validateTime = (time: string): boolean => {
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
+    return timeRegex.test(time)
+  }
+
+  const formatTime = (input: string): string => {
+    // Remove any non-digit characters
+    const digitsOnly = input.replace(/\D/g, '')
+    
+    if (digitsOnly.length <= 2) {
+      return digitsOnly
+    }
+    
+    const hours = digitsOnly.slice(0, 2)
+    const minutes = digitsOnly.slice(2, 4)
+    
+    // Validate hours and minutes
+    const hoursNum = parseInt(hours)
+    const minutesNum = parseInt(minutes)
+    
+    if (hoursNum > 23) {
+      return '23:' + (minutes || '00')
+    }
+    
+    if (minutesNum > 59) {
+      return hours + ':59'
+    }
+    
+    return `${hours}:${minutes}`
+  }
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let newTime = e.target.value
+    
+    // If user is typing manually (not using the time picker)
+    if (!validateTime(newTime)) {
+      newTime = formatTime(newTime)
+    }
+    
+    setNewEvent({ ...newEvent, time: newTime })
+  }
+
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateTime(newEvent.time)) {
+      alert('Please enter a valid time in 24-hour format (HH:mm)')
+      return
+    }
+    
     const id = Date.now().toString()
     const generatedEvents = generateRecurringEvents({ ...newEvent, id })
     setEvents([...events, ...generatedEvents])
@@ -169,15 +229,19 @@ const AdminInterface: React.FC = () => {
         />
       </div>
       <div className="mb-2">
-        <div className="form-text mb-1">Time (24-hour format)</div>
-        <input
-          type="time"
-          className="form-control bg-dark text-light"
-          value={newEvent.time}
-          onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
-          step="60"
-          required
-        />
+        <label className="form-label">Time (24-hour format)</label>
+        <TimeInputContainer>
+          <input
+            type="time"
+            className="form-control bg-dark text-light"
+            value={newEvent.time}
+            onChange={handleTimeChange}
+            required
+            pattern="[0-9]{2}:[0-9]{2}"
+            step="300"
+          />
+          <span className="time-format-hint">HH:mm</span>
+        </TimeInputContainer>
       </div>
       <div className="mb-2">
         <select
