@@ -100,15 +100,14 @@ const AdminInterface: React.FC = () => {
       return
     }
 
-    // Validate custom dates if recurring is set to custom
     if (newEvent.recurring === 'custom') {
       const invalidDates = newEvent.customDates.filter(date => {
         const trimmedDate = date.trim()
-        return !trimmedDate.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(Date.parse(trimmedDate))
+        return !trimmedDate.match(/^\d{4}-\d{2}-\d{2}$/) || !isValid(parse(trimmedDate, 'yyyy-MM-dd', new Date()))
       })
       
       if (invalidDates.length > 0) {
-        alert('Please enter valid dates in YYYY-MM-DD format')
+        alert(`Invalid date format found: ${invalidDates.join(', ')}\nPlease use YYYY-MM-DD format (e.g., 2024-10-25)`)
         return
       }
     }
@@ -196,7 +195,7 @@ const AdminInterface: React.FC = () => {
           ...event,
           id: `${event.id}-${format(currentDate, 'yyyyMMdd')}`,
           date: format(currentDate, 'yyyy-MM-dd'),
-          time: format(currentDate, 'HH:mm')
+          time: event.time
         })
       }
     }
@@ -283,16 +282,19 @@ const AdminInterface: React.FC = () => {
           <input
             type="text"
             className="form-control bg-dark text-light"
-            placeholder="Custom Dates (comma-separated YYYY-MM-DD)"
+            placeholder="YYYY-MM-DD, YYYY-MM-DD, ..."
             value={newEvent.customDates.join(', ')}
             onChange={e => {
               const dates = e.target.value
-                .split(',')
+                .split(/[,\n]/)
                 .map(date => date.trim())
                 .filter(date => date.length > 0)
               setNewEvent({ ...newEvent, customDates: dates })
             }}
           />
+          <small className="form-text text-muted">
+            Enter dates in YYYY-MM-DD format, separated by commas (e.g., 2024-10-25, 2024-10-26)
+          </small>
         </div>
       )}
       <button type="submit" className="btn btn-primary">Add Event</button>
