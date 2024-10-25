@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { useEvents } from '../hooks/useLocalStorage'
 import { Event } from '../types'
 import { useAuth } from '../contexts/AuthContext'
-import { addDays, addWeeks, addMonths, format, parse } from 'date-fns'
+import { addDays, addWeeks, addMonths, format, parse, isValid } from 'date-fns'
 
 const AdminContainer = styled.div`
   margin-top: 20px;
@@ -99,6 +99,19 @@ const AdminInterface: React.FC = () => {
       alert('Please enter a valid time in 24-hour format (HH:mm)')
       return
     }
+
+    // Validate custom dates if recurring is set to custom
+    if (newEvent.recurring === 'custom') {
+      const invalidDates = newEvent.customDates.filter(date => {
+        const trimmedDate = date.trim()
+        return !trimmedDate.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(Date.parse(trimmedDate))
+      })
+      
+      if (invalidDates.length > 0) {
+        alert('Please enter valid dates in YYYY-MM-DD format')
+        return
+      }
+    }
     
     const id = Date.now().toString()
     const generatedEvents = generateRecurringEvents({ ...newEvent, id })
@@ -136,6 +149,32 @@ const AdminInterface: React.FC = () => {
   }
 
   const generateRecurringEvents = (event: Event): Event[] => {
+    if (event.recurring === 'custom') {
+      const validCustomDates = event.customDates
+        .map(date => date.trim())
+        .filter(date => date.match(/^\d{4}-\d{2}-\d{2}$/))
+        .map(date => {
+          try {
+            const parsedDate = parse(date, 'yyyy-MM-dd', new Date())
+            if (isValid(parsedDate)) {
+              return {
+                ...event,
+                id: `${event.id}-custom-${date}`,
+                date: format(parsedDate, 'yyyy-MM-dd'),
+                time: event.time
+              }
+            }
+            return null
+          } catch (e) {
+            console.error('Error parsing date:', e)
+            return null
+          }
+        })
+        .filter(Boolean) as Event[]
+      
+      return validCustomDates
+    }
+
     const events = [event]
     if (event.recurring === 'none') return events
 
@@ -150,8 +189,6 @@ const AdminInterface: React.FC = () => {
         currentDate = addWeeks(currentDate, 1)
       } else if (event.recurring === 'monthly') {
         currentDate = addMonths(currentDate, 1)
-      } else if (event.recurring === 'custom') {
-        break
       }
 
       if (currentDate <= endDate) {
@@ -162,20 +199,6 @@ const AdminInterface: React.FC = () => {
           time: format(currentDate, 'HH:mm')
         })
       }
-    }
-
-    if (event.recurring === 'custom') {
-      event.customDates.forEach((customDate, index) => {
-        const parsedDate = parse(customDate.trim(), 'yyyy-MM-dd', new Date())
-        if (parsedDate <= endDate) {
-          events.push({
-            ...event,
-            id: `${event.id}-custom-${index}`,
-            date: format(parsedDate, 'yyyy-MM-dd'),
-            time: event.time,
-          })
-        }
-      })
     }
 
     return events
@@ -256,12 +279,19 @@ const AdminInterface: React.FC = () => {
       )}
       {newEvent.recurring === 'custom' && (
         <div className="mb-2">
+          <label className="form-label">Custom Dates (comma-separated YYYY-MM-DD)</label>
           <input
             type="text"
             className="form-control bg-dark text-light"
             placeholder="Custom Dates (comma-separated YYYY-MM-DD)"
-            value={newEvent.customDates.join(',')}
-            onChange={e => setNewEvent({ ...newEvent, customDates: e.target.value.split(',') })}
+            value={newEvent.customDates.join(', ')}
+            onChange={e => {
+              const dates = e.target.value
+                .split(',')
+                .map(date => date.trim())
+                .filter(date => date.length > 0)
+              setNewEvent({ ...newEvent, customDates: dates })
+            }}
           />
         </div>
       )}
