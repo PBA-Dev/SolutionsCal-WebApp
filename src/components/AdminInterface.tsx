@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { useEvents } from '../hooks/useLocalStorage'
 import { Event } from '../types'
 import { useAuth } from '../contexts/AuthContext'
-import { addDays, addWeeks, addMonths, format } from 'date-fns'
+import { addDays, addWeeks, addMonths, format, parse } from 'date-fns'
 
 const AdminContainer = styled.div`
   margin-top: 20px;
@@ -119,11 +119,13 @@ const AdminInterface: React.FC = () => {
 
     if (event.recurring === 'custom') {
       event.customDates.forEach((customDate, index) => {
-        if (new Date(customDate) <= endDate) {
+        const parsedDate = parse(customDate.trim(), 'yyyy-MM-dd', new Date())
+        if (parsedDate <= endDate) {
           events.push({
             ...event,
             id: `${event.id}-custom-${index}`,
-            date: customDate,
+            date: format(parsedDate, 'yyyy-MM-dd'),
+            time: event.time,
           })
         }
       })
@@ -167,11 +169,13 @@ const AdminInterface: React.FC = () => {
         />
       </div>
       <div className="mb-2">
+        <div className="form-text mb-1">Time (24-hour format)</div>
         <input
           type="time"
           className="form-control bg-dark text-light"
           value={newEvent.time}
           onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
+          step="60"
           required
         />
       </div>
@@ -233,42 +237,6 @@ const AdminInterface: React.FC = () => {
     </ul>
   )
 
-  const renderChangePassword = () => (
-    <form onSubmit={handlePasswordChange} className="mb-3">
-      <div className="mb-2">
-        <input
-          type="password"
-          className="form-control bg-dark text-light"
-          placeholder="Current Password"
-          value={passwordForm.currentPassword}
-          onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-          required
-        />
-      </div>
-      <div className="mb-2">
-        <input
-          type="password"
-          className="form-control bg-dark text-light"
-          placeholder="New Password"
-          value={passwordForm.newPassword}
-          onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-          required
-        />
-      </div>
-      <div className="mb-2">
-        <input
-          type="password"
-          className="form-control bg-dark text-light"
-          placeholder="Confirm New Password"
-          value={passwordForm.confirmPassword}
-          onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-          required
-        />
-      </div>
-      <button type="submit" className="btn btn-primary">Change Password</button>
-    </form>
-  )
-
   return (
     <AdminContainer>
       <MenuContainer>
@@ -284,7 +252,41 @@ const AdminInterface: React.FC = () => {
       </h3>
       {activeSection === 'add' && renderAddEventForm()}
       {activeSection === 'manage' && renderManageEvents()}
-      {activeSection === 'password' && renderChangePassword()}
+      {activeSection === 'password' && (
+        <form onSubmit={handlePasswordChange} className="mb-3">
+          <div className="mb-2">
+            <input
+              type="password"
+              className="form-control bg-dark text-light"
+              placeholder="Current Password"
+              value={passwordForm.currentPassword}
+              onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <input
+              type="password"
+              className="form-control bg-dark text-light"
+              placeholder="New Password"
+              value={passwordForm.newPassword}
+              onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <input
+              type="password"
+              className="form-control bg-dark text-light"
+              placeholder="Confirm New Password"
+              value={passwordForm.confirmPassword}
+              onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">Change Password</button>
+        </form>
+      )}
     </AdminContainer>
   )
 }
