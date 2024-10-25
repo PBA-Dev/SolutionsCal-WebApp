@@ -68,6 +68,19 @@ const AdminInterface: React.FC = () => {
     return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)
   }
 
+  const validateCustomDate = (dateStr: string): boolean => {
+    // Support both dd.mm.yyyy and dd/mm/yyyy formats
+    const formats = ['dd.MM.yyyy', 'dd/MM/yyyy'];
+    return formats.some(format => {
+      try {
+        const parsedDate = parse(dateStr, format, new Date());
+        return isValid(parsedDate);
+      } catch {
+        return false;
+      }
+    });
+  };
+
   const formatEventTime = (time: string): string => {
     try {
       if (!time) return '';
@@ -101,14 +114,12 @@ const AdminInterface: React.FC = () => {
     }
 
     if (newEvent.recurring === 'custom') {
-      const invalidDates = newEvent.customDates.filter(date => {
-        const trimmedDate = date.trim()
-        return !trimmedDate.match(/^\d{4}-\d{2}-\d{2}$/) || !isValid(parse(trimmedDate, 'yyyy-MM-dd', new Date()))
-      })
+      const invalidDates = newEvent.customDates.filter(date => !validateCustomDate(date.trim()));
       
       if (invalidDates.length > 0) {
-        alert(`Invalid date format found: ${invalidDates.join(', ')}\nPlease use YYYY-MM-DD format (e.g., 2024-10-25)`)
-        return
+        alert(`Invalid date format found: ${invalidDates.join(', ')}
+Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
+        return;
       }
     }
     
@@ -150,28 +161,30 @@ const AdminInterface: React.FC = () => {
   const generateRecurringEvents = (event: Event): Event[] => {
     if (event.recurring === 'custom') {
       const validCustomDates = event.customDates
-        .map(date => date.trim())
-        .filter(date => date.match(/^\d{4}-\d{2}-\d{2}$/))
         .map(date => {
           try {
-            const parsedDate = parse(date, 'yyyy-MM-dd', new Date())
+            // Try both formats
+            let parsedDate = parse(date.trim(), 'dd.MM.yyyy', new Date());
+            if (!isValid(parsedDate)) {
+              parsedDate = parse(date.trim(), 'dd/MM/yyyy', new Date());
+            }
             if (isValid(parsedDate)) {
               return {
                 ...event,
-                id: `${event.id}-custom-${date}`,
+                id: `${event.id}-custom-${format(parsedDate, 'yyyy-MM-dd')}`,
                 date: format(parsedDate, 'yyyy-MM-dd'),
                 time: event.time
-              }
+              };
             }
-            return null
+            return null;
           } catch (e) {
-            console.error('Error parsing date:', e)
-            return null
+            console.error('Error parsing date:', e);
+            return null;
           }
         })
-        .filter(Boolean) as Event[]
+        .filter(Boolean) as Event[];
       
-      return validCustomDates
+      return validCustomDates;
     }
 
     const events = [event]
@@ -278,22 +291,22 @@ const AdminInterface: React.FC = () => {
       )}
       {newEvent.recurring === 'custom' && (
         <div className="mb-2">
-          <label className="form-label">Custom Dates (comma-separated YYYY-MM-DD)</label>
+          <label className="form-label">Custom Dates (comma-separated dd.mm.yyyy or dd/mm/yyyy)</label>
           <input
             type="text"
             className="form-control bg-dark text-light"
-            placeholder="YYYY-MM-DD, YYYY-MM-DD, ..."
+            placeholder="dd.mm.yyyy, dd/mm/yyyy, ..."
             value={newEvent.customDates.join(', ')}
             onChange={e => {
               const dates = e.target.value
-                .split(/[,\n]/)
+                .split(',')
                 .map(date => date.trim())
                 .filter(date => date.length > 0)
               setNewEvent({ ...newEvent, customDates: dates })
             }}
           />
           <small className="form-text text-muted">
-            Enter dates in YYYY-MM-DD format, separated by commas (e.g., 2024-10-25, 2024-10-26)
+            Enter dates separated by commas (e.g., 25.10.2024, 26/10/2024)
           </small>
         </div>
       )}
