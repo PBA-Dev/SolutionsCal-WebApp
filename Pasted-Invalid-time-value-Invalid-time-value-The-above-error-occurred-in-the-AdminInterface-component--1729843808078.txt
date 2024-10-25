@@ -1,0 +1,23 @@
+Invalid time value
+Invalid time value
+The above error occurred in the <AdminInterface> component:
+
+    at AdminInterface (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/components/AdminInterface.tsx?t=1729843716708:66:31)
+    at div
+    at O2 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/styled-components.js?v=19de323a:1211:6)
+    at App (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/App.tsx?t=1729843727686:36:43)
+    at AuthProvider (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/contexts/AuthContext.tsx:20:25)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Invalid time value
+at format (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/date-fns.js?v=19de323a:1765:11)
+at https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/components/AdminInterface.tsx?t=1729843716708:380:9
+at Array.map (<anonymous>)
+at renderManageEvents (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/components/AdminInterface.tsx?t=1729843716708:373:109)
+at AdminInterface (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/src/components/AdminInterface.tsx?t=1729843716708:460:35)
+at renderWithHooks (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/chunk-BVI7NZOO.js?v=19de323a:11548:26)
+at updateFunctionComponent (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/chunk-BVI7NZOO.js?v=19de323a:14582:28)
+at beginWork (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/chunk-BVI7NZOO.js?v=19de323a:15924:22)
+at beginWork$1 (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/chunk-BVI7NZOO.js?v=19de323a:19753:22)
+at performUnitOfWork (https://ca8e2443-dcfb-4d1d-b78b-9fe401d2ae5a-00-1m03x35adilf.kirk.replit.dev/node_modules/.vite/deps/chunk-BVI7NZOO.js?v=19de323a:19198:20)

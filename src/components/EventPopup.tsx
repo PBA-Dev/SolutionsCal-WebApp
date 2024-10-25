@@ -42,6 +42,21 @@ interface EventPopupProps {
 const EventPopup: React.FC<EventPopupProps> = ({ date, onClose }) => {
   const [events] = useEvents();
 
+  const formatEventTime = (event: Event): string => {
+    try {
+      if (!event.time) return '';
+      const [hours, minutes] = event.time.split(':');
+      if (!hours || !minutes) return '';
+      const date = new Date();
+      date.setHours(parseInt(hours, 10));
+      date.setMinutes(parseInt(minutes, 10));
+      return format(date, 'HH:mm');
+    } catch (e) {
+      console.error('Invalid time format:', e);
+      return '';
+    }
+  };
+
   const eventsForDate = events.filter((event: Event) => 
     format(new Date(event.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   );
@@ -52,15 +67,12 @@ const EventPopup: React.FC<EventPopupProps> = ({ date, onClose }) => {
         <h3 className="mb-3">{format(date, 'MMMM d, yyyy', { locale: de })}</h3>
         {eventsForDate.length > 0 ? (
           <ul className="list-group mb-3">
-            {eventsForDate.map((event: Event) => {
-              const eventTime = format(new Date(`${event.date}T${event.time}`), 'HH:mm');
-              return (
-                <EventTitle key={event.id} className="list-group-item bg-dark text-light">
-                  {event.title} <br />
-                  <small>{eventTime}</small>
-                </EventTitle>
-              );
-            })}
+            {eventsForDate.map((event: Event) => (
+              <EventTitle key={event.id} className="list-group-item bg-dark text-light">
+                {event.title} <br />
+                <small>{formatEventTime(event)}</small>
+              </EventTitle>
+            ))}
           </ul>
         ) : (
           <p>Keine Veranstaltungen für dieses Datum.</p>

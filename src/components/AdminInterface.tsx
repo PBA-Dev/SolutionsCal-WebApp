@@ -68,13 +68,30 @@ const AdminInterface: React.FC = () => {
     return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)
   }
 
+  const formatEventTime = (time: string): string => {
+    try {
+      if (!time) return '';
+      const [hours, minutes] = time.split(':');
+      if (!hours || !minutes) return '';
+      const date = new Date();
+      date.setHours(parseInt(hours, 10));
+      date.setMinutes(parseInt(minutes, 10));
+      return format(date, 'HH:mm');
+    } catch (e) {
+      console.error('Invalid time format:', e);
+      return '';
+    }
+  };
+
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value
-    setNewEvent(prev => ({
-      ...prev,
-      time: newTime
-    }))
-  }
+    const newTime = e.target.value;
+    if (!newTime || validateTime(newTime)) {
+      setNewEvent(prev => ({
+        ...prev,
+        time: newTime
+      }));
+    }
+  };
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,7 +151,7 @@ const AdminInterface: React.FC = () => {
       } else if (event.recurring === 'monthly') {
         currentDate = addMonths(currentDate, 1)
       } else if (event.recurring === 'custom') {
-        break // Custom dates are handled separately
+        break
       }
 
       if (currentDate <= endDate) {
@@ -256,7 +273,7 @@ const AdminInterface: React.FC = () => {
     <ul className="list-group">
       {events.map((event: Event) => (
         <li key={event.id} className="list-group-item d-flex justify-content-between align-items-center bg-dark text-light">
-          <span>{event.title} - {event.date} {format(new Date(`${event.date}T${event.time}`), 'HH:mm')} (Recurring: {event.recurring})</span>
+          <span>{event.title} - {event.date} {formatEventTime(event.time)} (Recurring: {event.recurring})</span>
           <div>
             <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleDuplicateEvent(event)}>Duplicate</button>
             <button className="btn btn-sm btn-outline-warning me-2" onClick={() => {
