@@ -65,45 +65,15 @@ const AdminInterface: React.FC = () => {
   })
 
   const validateTime = (time: string): boolean => {
-    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
-    return timeRegex.test(time)
-  }
-
-  const formatTime = (input: string): string => {
-    // Remove any non-digit characters
-    const digitsOnly = input.replace(/\D/g, '')
-    
-    if (digitsOnly.length <= 2) {
-      return digitsOnly
-    }
-    
-    const hours = digitsOnly.slice(0, 2)
-    const minutes = digitsOnly.slice(2, 4)
-    
-    // Validate hours and minutes
-    const hoursNum = parseInt(hours)
-    const minutesNum = parseInt(minutes)
-    
-    if (hoursNum > 23) {
-      return '23:' + (minutes || '00')
-    }
-    
-    if (minutesNum > 59) {
-      return hours + ':59'
-    }
-    
-    return `${hours}:${minutes}`
+    return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)
   }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newTime = e.target.value
-    
-    // If user is typing manually (not using the time picker)
-    if (!validateTime(newTime)) {
-      newTime = formatTime(newTime)
-    }
-    
-    setNewEvent({ ...newEvent, time: newTime })
+    const newTime = e.target.value
+    setNewEvent(prev => ({
+      ...prev,
+      time: newTime
+    }))
   }
 
   const handleAddEvent = (e: React.FormEvent) => {
@@ -237,8 +207,7 @@ const AdminInterface: React.FC = () => {
             value={newEvent.time}
             onChange={handleTimeChange}
             required
-            pattern="[0-9]{2}:[0-9]{2}"
-            step="300"
+            step="60"
           />
           <span className="time-format-hint">HH:mm</span>
         </TimeInputContainer>
@@ -287,7 +256,7 @@ const AdminInterface: React.FC = () => {
     <ul className="list-group">
       {events.map((event: Event) => (
         <li key={event.id} className="list-group-item d-flex justify-content-between align-items-center bg-dark text-light">
-          <span>{event.title} - {event.date} {event.time} (Recurring: {event.recurring})</span>
+          <span>{event.title} - {event.date} {format(new Date(`${event.date}T${event.time}`), 'HH:mm')} (Recurring: {event.recurring})</span>
           <div>
             <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleDuplicateEvent(event)}>Duplicate</button>
             <button className="btn btn-sm btn-outline-warning me-2" onClick={() => {

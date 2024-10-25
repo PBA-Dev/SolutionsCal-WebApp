@@ -11,30 +11,28 @@ const PopupOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7); // Darker, more opaque overlay
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
 `;
 
 const PopupContent = styled.div`
-  background-color: #1e1e1e; // Darker background
-  color: #ffffff; // Light text color
-  padding: 30px; // Increased padding
-  border-radius: 12px; // Rounded corners
+  background-color: #1e1e1e;
+  color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
   max-width: 400px;
   width: 100%;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); // More pronounced shadow
-  border: 1px solid #3a3a3a; // Visible border
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid #3a3a3a;
 `;
 
-// Define EventTitle styled component for larger font size
 const EventTitle = styled.li`
-  font-size: 1.5rem; /* Increased font size for event title */
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 10px;
 `;
-
 
 interface EventPopupProps {
   date: Date;
@@ -42,31 +40,29 @@ interface EventPopupProps {
 }
 
 const EventPopup: React.FC<EventPopupProps> = ({ date, onClose }) => {
-  const [events] = useEvents(); // Removed setEvents since it's not needed
+  const [events] = useEvents();
 
-  // Filter events for the selected date
   const eventsForDate = events.filter((event: Event) => 
     format(new Date(event.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   );
   
-          return (
-            <PopupOverlay onClick={onClose}>
-              <PopupContent onClick={e => e.stopPropagation()}>
-                <h3 className="mb-3">{format(date, 'MMMM d, yyyy', { locale: de })}</h3>
-                {eventsForDate.length > 0 ? (
-                  <ul className="list-group mb-3">
-                    {eventsForDate.map((event: Event) => {
-                      // Ensure date contains both date and time
-                      const eventTime = format(new Date(event.date), 'HH:mm', { locale: de }); // 24-hour time format
-                      return (
-                        <EventTitle key={event.id} className="list-group-item bg-dark text-light">
-                          {event.title} <br />
-                          <small>{eventTime}</small> {/* Display event time */}
-                        </EventTitle>
-                      );
-                    })}
-                  </ul>
-                ) : (
+  return (
+    <PopupOverlay onClick={onClose}>
+      <PopupContent onClick={e => e.stopPropagation()}>
+        <h3 className="mb-3">{format(date, 'MMMM d, yyyy', { locale: de })}</h3>
+        {eventsForDate.length > 0 ? (
+          <ul className="list-group mb-3">
+            {eventsForDate.map((event: Event) => {
+              const eventTime = format(new Date(`${event.date}T${event.time}`), 'HH:mm');
+              return (
+                <EventTitle key={event.id} className="list-group-item bg-dark text-light">
+                  {event.title} <br />
+                  <small>{eventTime}</small>
+                </EventTitle>
+              );
+            })}
+          </ul>
+        ) : (
           <p>Keine Veranstaltungen für dieses Datum.</p>
         )}
       </PopupContent>
