@@ -46,6 +46,12 @@ const TimeInputContainer = styled.div`
   }
 `
 
+const ErrorMessage = styled.div`
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+`
+
 const AdminInterface: React.FC = () => {
   const [events, setEvents] = useEvents()
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({ 
@@ -56,6 +62,7 @@ const AdminInterface: React.FC = () => {
     customDates: [],
     recurrenceEndDate: ''
   })
+  const [customDateError, setCustomDateError] = useState<string>('')
   const [activeSection, setActiveSection] = useState<'add' | 'manage' | 'password'>('add')
   const { logout, changePassword } = useAuth()
   const [passwordForm, setPasswordForm] = useState({
@@ -69,42 +76,60 @@ const AdminInterface: React.FC = () => {
   }
 
   const validateCustomDate = (dateStr: string): boolean => {
-    // Support both dd.mm.yyyy and dd/mm/yyyy formats
-    const formats = ['dd.MM.yyyy', 'dd/MM/yyyy'];
+    const formats = ['dd.MM.yyyy', 'dd/MM/yyyy']
     return formats.some(format => {
       try {
-        const parsedDate = parse(dateStr, format, new Date());
-        return isValid(parsedDate);
+        const parsedDate = parse(dateStr.trim(), format, new Date())
+        return isValid(parsedDate)
       } catch {
-        return false;
+        return false
       }
-    });
-  };
+    })
+  }
 
   const formatEventTime = (time: string): string => {
     try {
-      if (!time) return '';
-      const [hours, minutes] = time.split(':');
-      if (!hours || !minutes) return '';
-      const date = new Date();
-      date.setHours(parseInt(hours, 10));
-      date.setMinutes(parseInt(minutes, 10));
-      return format(date, 'HH:mm');
+      if (!time) return ''
+      const [hours, minutes] = time.split(':')
+      if (!hours || !minutes) return ''
+      const date = new Date()
+      date.setHours(parseInt(hours, 10))
+      date.setMinutes(parseInt(minutes, 10))
+      return format(date, 'HH:mm')
     } catch (e) {
-      console.error('Invalid time format:', e);
-      return '';
+      console.error('Invalid time format:', e)
+      return ''
     }
-  };
+  }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value;
+    const newTime = e.target.value
     if (!newTime || validateTime(newTime)) {
       setNewEvent(prev => ({
         ...prev,
         time: newTime
-      }));
+      }))
     }
-  };
+  }
+
+  const handleCustomDatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value
+    const dates = input.split(',').map(date => date.trim()).filter(date => date.length > 0)
+    
+    // Validate each date
+    const invalidDates = dates.filter(date => !validateCustomDate(date))
+    
+    if (invalidDates.length > 0) {
+      setCustomDateError(`Invalid date format: ${invalidDates.join(', ')}. Please use dd.mm.yyyy or dd/mm/yyyy format.`)
+    } else {
+      setCustomDateError('')
+    }
+
+    setNewEvent(prev => ({
+      ...prev,
+      customDates: dates
+    }))
+  }
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault()
@@ -114,12 +139,16 @@ const AdminInterface: React.FC = () => {
     }
 
     if (newEvent.recurring === 'custom') {
-      const invalidDates = newEvent.customDates.filter(date => !validateCustomDate(date.trim()));
+      const invalidDates = newEvent.customDates.filter(date => !validateCustomDate(date.trim()))
       
       if (invalidDates.length > 0) {
-        alert(`Invalid date format found: ${invalidDates.join(', ')}
-Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
-        return;
+        setCustomDateError(`Invalid date format: ${invalidDates.join(', ')}. Please use dd.mm.yyyy or dd/mm/yyyy format.`)
+        return
+      }
+      
+      if (newEvent.customDates.length === 0) {
+        setCustomDateError('Please enter at least one date for custom recurrence.')
+        return
       }
     }
     
@@ -134,6 +163,7 @@ Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
       customDates: [],
       recurrenceEndDate: ''
     })
+    setCustomDateError('')
   }
 
   const handlePasswordChange = (e: React.FormEvent) => {
@@ -164,9 +194,9 @@ Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
         .map(date => {
           try {
             // Try both formats
-            let parsedDate = parse(date.trim(), 'dd.MM.yyyy', new Date());
+            let parsedDate = parse(date.trim(), 'dd.MM.yyyy', new Date())
             if (!isValid(parsedDate)) {
-              parsedDate = parse(date.trim(), 'dd/MM/yyyy', new Date());
+              parsedDate = parse(date.trim(), 'dd/MM/yyyy', new Date())
             }
             if (isValid(parsedDate)) {
               return {
@@ -174,17 +204,21 @@ Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
                 id: `${event.id}-custom-${format(parsedDate, 'yyyy-MM-dd')}`,
                 date: format(parsedDate, 'yyyy-MM-dd'),
                 time: event.time
-              };
+              }
             }
-            return null;
+            return null
           } catch (e) {
-            console.error('Error parsing date:', e);
-            return null;
+            console.error('Error parsing date:', e)
+            return null
           }
         })
-        .filter(Boolean) as Event[];
+        .filter(Boolean) as Event[]
       
-      return validCustomDates;
+      if (validCustomDates.length === 0) {
+        throw new Error('No valid dates provided for custom recurrence')
+      }
+      
+      return validCustomDates
     }
 
     const events = [event]
@@ -268,7 +302,10 @@ Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
         <select
           className="form-control bg-dark text-light"
           value={newEvent.recurring}
-          onChange={e => setNewEvent({ ...newEvent, recurring: e.target.value as Event['recurring'] })}
+          onChange={e => {
+            setNewEvent({ ...newEvent, recurring: e.target.value as Event['recurring'] })
+            setCustomDateError('')
+          }}
         >
           <option value="none">No Recurrence</option>
           <option value="daily">Daily</option>
@@ -295,18 +332,16 @@ Please use dd.mm.yyyy or dd/mm/yyyy format (e.g., 25.10.2024 or 25/10/2024)`);
           <input
             type="text"
             className="form-control bg-dark text-light"
-            placeholder="dd.mm.yyyy, dd/mm/yyyy, ..."
+            placeholder="25.10.2024, 26/10/2024, ..."
             value={newEvent.customDates.join(', ')}
-            onChange={e => {
-              const dates = e.target.value
-                .split(',')
-                .map(date => date.trim())
-                .filter(date => date.length > 0)
-              setNewEvent({ ...newEvent, customDates: dates })
-            }}
+            onChange={handleCustomDatesChange}
+            aria-describedby="customDatesHelp"
           />
-          <small className="form-text text-muted">
-            Enter dates separated by commas (e.g., 25.10.2024, 26/10/2024)
+          {customDateError && (
+            <ErrorMessage>{customDateError}</ErrorMessage>
+          )}
+          <small id="customDatesHelp" className="form-text text-muted">
+            Enter dates separated by commas in either format: dd.mm.yyyy or dd/mm/yyyy
           </small>
         </div>
       )}
