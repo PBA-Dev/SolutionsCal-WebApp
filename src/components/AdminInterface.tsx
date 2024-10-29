@@ -54,13 +54,14 @@ const ErrorMessage = styled.div`
 
 const AdminInterface: React.FC = () => {
   const [events, setEvents] = useEvents()
-  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({ 
+  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'> & { rawCustomDates: string }>({ 
     title: '', 
     date: '', 
     time: '', 
     recurring: 'none', 
     customDates: [],
-    recurrenceEndDate: ''
+    recurrenceEndDate: '',
+    rawCustomDates: ''
   })
   const [customDateError, setCustomDateError] = useState<string>('')
   const [activeSection, setActiveSection] = useState<'add' | 'manage' | 'password'>('add')
@@ -114,21 +115,27 @@ const AdminInterface: React.FC = () => {
 
   const handleCustomDatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value
-    const dates = input.split(',').map(date => date.trim()).filter(date => date.length > 0)
     
-    // Validate each date
-    const invalidDates = dates.filter(date => !validateCustomDate(date))
+    // Allow any input including commas
+    setNewEvent(prev => ({
+      ...prev,
+      rawCustomDates: input,
+      customDates: input ? input.split(',').map(date => date.trim()) : []
+    }))
     
-    if (invalidDates.length > 0) {
-      setCustomDateError(`Invalid date format: ${invalidDates.join(', ')}. Please use dd.mm.yyyy or dd/mm/yyyy format.`)
+    // Only validate if we have content
+    if (input) {
+      const dates = input.split(',').map(date => date.trim()).filter(date => date.length > 0)
+      const invalidDates = dates.filter(date => !validateCustomDate(date))
+      
+      if (invalidDates.length > 0) {
+        setCustomDateError(`Invalid date format: ${invalidDates.join(', ')}. Please use dd.mm.yyyy or dd/mm/yyyy format.`)
+      } else {
+        setCustomDateError('')
+      }
     } else {
       setCustomDateError('')
     }
-
-    setNewEvent(prev => ({
-      ...prev,
-      customDates: dates
-    }))
   }
 
   const handleAddEvent = (e: React.FormEvent) => {
@@ -153,7 +160,8 @@ const AdminInterface: React.FC = () => {
     }
     
     const id = Date.now().toString()
-    const generatedEvents = generateRecurringEvents({ ...newEvent, id })
+    const { rawCustomDates, ...eventWithoutRaw } = newEvent
+    const generatedEvents = generateRecurringEvents({ ...eventWithoutRaw, id })
     setEvents([...events, ...generatedEvents])
     setNewEvent({ 
       title: '', 
@@ -161,7 +169,8 @@ const AdminInterface: React.FC = () => {
       time: '', 
       recurring: 'none', 
       customDates: [],
-      recurrenceEndDate: ''
+      recurrenceEndDate: '',
+      rawCustomDates: ''
     })
     setCustomDateError('')
   }
@@ -333,7 +342,7 @@ const AdminInterface: React.FC = () => {
             type="text"
             className="form-control bg-dark text-light"
             placeholder="25.10.2024, 26/10/2024, ..."
-            value={newEvent.customDates.join(', ')}
+            value={newEvent.rawCustomDates}
             onChange={handleCustomDatesChange}
             aria-describedby="customDatesHelp"
           />
