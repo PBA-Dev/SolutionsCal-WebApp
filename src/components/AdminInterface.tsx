@@ -52,6 +52,29 @@ const ErrorMessage = styled.div`
   margin-top: 0.25rem;
 `
 
+const EditModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`
+
+const EditModalContent = styled.div`
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+`
+
 const AdminInterface: React.FC = () => {
   const [events, setEvents] = useEvents()
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'> & { rawCustomDates: string }>({ 
@@ -63,6 +86,7 @@ const AdminInterface: React.FC = () => {
     recurrenceEndDate: '',
     rawCustomDates: ''
   })
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [customDateError, setCustomDateError] = useState<string>('')
   const [activeSection, setActiveSection] = useState<'add' | 'manage' | 'password'>('add')
   const { logout, changePassword } = useAuth()
@@ -103,27 +127,29 @@ const AdminInterface: React.FC = () => {
     }
   }
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>, isEditing: boolean = false) => {
     const newTime = e.target.value
     if (!newTime || validateTime(newTime)) {
-      setNewEvent(prev => ({
-        ...prev,
-        time: newTime
-      }))
+      if (isEditing && editingEvent) {
+        setEditingEvent({ ...editingEvent, time: newTime })
+      } else {
+        setNewEvent(prev => ({
+          ...prev,
+          time: newTime
+        }))
+      }
     }
   }
 
   const handleCustomDatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value
     
-    // Allow any input including commas
     setNewEvent(prev => ({
       ...prev,
       rawCustomDates: input,
       customDates: input ? input.split(',').map(date => date.trim()) : []
     }))
     
-    // Only validate if we have content
     if (input) {
       const dates = input.split(',').map(date => date.trim()).filter(date => date.length > 0)
       const invalidDates = dates.filter(date => !validateCustomDate(date))
@@ -202,7 +228,6 @@ const AdminInterface: React.FC = () => {
       const validCustomDates = event.customDates
         .map(date => {
           try {
-            // Try both formats
             let parsedDate = parse(date.trim(), 'dd.MM.yyyy', new Date())
             if (!isValid(parsedDate)) {
               parsedDate = parse(date.trim(), 'dd/MM/yyyy', new Date())
@@ -268,8 +293,14 @@ const AdminInterface: React.FC = () => {
     setEvents([...events, { ...event, id: newId }])
   }
 
-  const handleEditEvent = (id: string, updatedEvent: Omit<Event, 'id'>) => {
-    setEvents(events.map(event => event.id === id ? { ...event, ...updatedEvent } : event))
+  const handleEditEvent = (event: Event) => {
+    if (!validateTime(event.time)) {
+      alert('Please enter a valid time in 24-hour format (HH:mm)')
+      return
+    }
+
+    setEvents(events.map(e => e.id === event.id ? event : e))
+    setEditingEvent(null)
   }
 
   const renderAddEventForm = () => (
@@ -300,7 +331,7 @@ const AdminInterface: React.FC = () => {
             type="time"
             className="form-control bg-dark text-light"
             value={newEvent.time}
-            onChange={handleTimeChange}
+            onChange={e => handleTimeChange(e)}
             required
             step="60"
           />
@@ -365,16 +396,68 @@ const AdminInterface: React.FC = () => {
           <span>{event.title} - {event.date} {formatEventTime(event.time)} (Recurring: {event.recurring})</span>
           <div>
             <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleDuplicateEvent(event)}>Duplicate</button>
-            <button className="btn btn-sm btn-outline-warning me-2" onClick={() => {
-              const updatedTitle = prompt('Enter new title', event.title)
-              if (updatedTitle) handleEditEvent(event.id, { ...event, title: updatedTitle })
-            }}>Edit</button>
+            <button className="btn btn-sm btn-outline-warning me-2" onClick={() => setEditingEvent(event)}>Edit</button>
             <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteEvent(event.id)}>Delete</button>
           </div>
         </li>
       ))}
     </ul>
   )
+
+  const renderEditModal = () => {
+    if (!editingEvent) return null;
+
+    return (
+      <EditModal onClick={() => setEditingEvent(null)}>
+        <EditModalContent onClick={e => e.stopPropagation()} className="text-light">
+          <h4 className="mb-3">Edit Event</h4>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleEditEvent(editingEvent);
+          }}>
+            <div className="mb-2">
+              <label className="form-label">Title</label>
+              <input
+                type="text"
+                className="form-control bg-dark text-light"
+                value={editingEvent.title}
+                onChange={e => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label className="form-label">Date</label>
+              <input
+                type="date"
+                className="form-control bg-dark text-light"
+                value={editingEvent.date}
+                onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-2">
+              <label className="form-label">Time (24-hour format)</label>
+              <TimeInputContainer>
+                <input
+                  type="time"
+                  className="form-control bg-dark text-light"
+                  value={editingEvent.time}
+                  onChange={e => handleTimeChange(e, true)}
+                  required
+                  step="60"
+                />
+                <span className="time-format-hint">HH:mm</span>
+              </TimeInputContainer>
+            </div>
+            <div className="mt-3">
+              <button type="submit" className="btn btn-primary me-2">Save Changes</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setEditingEvent(null)}>Cancel</button>
+            </div>
+          </form>
+        </EditModalContent>
+      </EditModal>
+    );
+  };
 
   return (
     <AdminContainer>
@@ -426,6 +509,7 @@ const AdminInterface: React.FC = () => {
           <button type="submit" className="btn btn-primary">Change Password</button>
         </form>
       )}
+      {renderEditModal()}
     </AdminContainer>
   )
 }
