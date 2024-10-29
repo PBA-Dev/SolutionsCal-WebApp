@@ -5,14 +5,15 @@ import { useAuth } from '../contexts/AuthContext'
 const LoginContainer = styled.div<{ $isVisible: boolean }>`
   margin-top: 20px;
   background-color: #1e1e1e;
-  padding: 20px;
+  padding: ${props => props.$isVisible ? '20px' : '0'};
   border-radius: 8px;
   border: 1px solid #3a3a3a;
   max-height: ${props => props.$isVisible ? '500px' : '0'};
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
   opacity: ${props => props.$isVisible ? '1' : '0'};
-  transition: opacity 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  visibility: ${props => props.$isVisible ? 'visible' : 'hidden'};
+  margin-bottom: ${props => props.$isVisible ? '20px' : '0'};
 `
 
 const ToggleButton = styled.button`
@@ -27,6 +28,11 @@ const ToggleButton = styled.button`
   &:hover {
     background-color: #3c3c3c;
   }
+`
+
+const FormContainer = styled.form`
+  height: auto;
+  transition: height 0.3s ease-in-out;
 `
 
 const LoginForm: React.FC = () => {
@@ -46,7 +52,7 @@ const LoginForm: React.FC = () => {
         {isVisible ? 'Hide Login' : 'Show Login'}
       </ToggleButton>
       <LoginContainer $isVisible={isVisible}>
-        <form onSubmit={handleSubmit}>
+        <FormContainer onSubmit={handleSubmit}>
           <h3 className="mb-3">Admin Login</h3>
           <div className="mb-3">
             <label htmlFor="username" className="form-label">Username:</label>
@@ -71,7 +77,7 @@ const LoginForm: React.FC = () => {
             />
           </div>
           <button type="submit" className="btn btn-primary">Login</button>
-        </form>
+        </FormContainer>
       </LoginContainer>
     </div>
   )
