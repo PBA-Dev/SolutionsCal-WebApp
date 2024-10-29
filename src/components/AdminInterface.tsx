@@ -100,6 +100,15 @@ const AdminInterface: React.FC = () => {
     return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)
   }
 
+  const validateDate = (dateStr: string): boolean => {
+    try {
+      const date = new Date(dateStr)
+      return isValid(date)
+    } catch {
+      return false
+    }
+  }
+
   const validateCustomDate = (dateStr: string): boolean => {
     const formats = ['dd.MM.yyyy', 'dd/MM/yyyy']
     return formats.some(format => {
@@ -131,11 +140,31 @@ const AdminInterface: React.FC = () => {
     const newTime = e.target.value
     if (!newTime || validateTime(newTime)) {
       if (isEditing && editingEvent) {
-        setEditingEvent({ ...editingEvent, time: newTime })
+        setEditingEvent(prev => ({
+          ...prev,
+          time: newTime
+        }))
       } else {
         setNewEvent(prev => ({
           ...prev,
           time: newTime
+        }))
+      }
+    }
+  }
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, isEditing: boolean = false) => {
+    const newDate = e.target.value
+    if (!newDate || validateDate(newDate)) {
+      if (isEditing && editingEvent) {
+        setEditingEvent(prev => ({
+          ...prev,
+          date: newDate
+        }))
+      } else {
+        setNewEvent(prev => ({
+          ...prev,
+          date: newDate
         }))
       }
     }
@@ -299,8 +328,25 @@ const AdminInterface: React.FC = () => {
       return
     }
 
-    setEvents(events.map(e => e.id === event.id ? event : e))
-    setEditingEvent(null)
+    if (!validateDate(event.date)) {
+      alert('Please enter a valid date')
+      return
+    }
+
+    try {
+      const [hours, minutes] = event.time.split(':')
+      const formattedTime = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+      
+      const updatedEvent = {
+        ...event,
+        time: formattedTime
+      }
+
+      setEvents(events.map(e => e.id === event.id ? updatedEvent : e))
+      setEditingEvent(null)
+    } catch (error) {
+      alert('Error updating event. Please check the time format.')
+    }
   }
 
   const renderAddEventForm = () => (
@@ -320,7 +366,7 @@ const AdminInterface: React.FC = () => {
           type="date"
           className="form-control bg-dark text-light"
           value={newEvent.date}
-          onChange={e => setNewEvent({ ...newEvent, date: e.target.value })}
+          onChange={e => handleDateChange(e, false)}
           required
         />
       </div>
@@ -431,7 +477,7 @@ const AdminInterface: React.FC = () => {
                 type="date"
                 className="form-control bg-dark text-light"
                 value={editingEvent.date}
-                onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                onChange={e => handleDateChange(e, true)}
                 required
               />
             </div>
@@ -451,7 +497,13 @@ const AdminInterface: React.FC = () => {
             </div>
             <div className="mt-3">
               <button type="submit" className="btn btn-primary me-2">Save Changes</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setEditingEvent(null)}>Cancel</button>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setEditingEvent(null)}
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </EditModalContent>
