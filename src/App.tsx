@@ -21,7 +21,20 @@ const App: React.FC = () => {
 
   return (
     <AppContainer className="container">
-      <h1 className="mb-4">Allstars Solutions Kalendar</h1>
+      <h1 className="mb-4 d-flex justify-content-center align-items-center">
+        <img
+          src="https://pflegeberatung-allstars.de/wp-content/uploads/2024/04/Kopie-von-allstars-nobg.png"
+          alt="Allstars Solutions Logo"
+          style={{ width: "60px", height: "50px", marginRight: "20px" }}
+        />
+        Allstars Solutions Kalendar
+        <img
+          src="https://pflegeberatung-allstars.de/wp-content/uploads/2024/04/Kopie-von-allstars-nobg.png"
+          alt="Allstars Solutions Logo"
+          style={{ width: "60px", height: "50px", marginLeft: "20px" }}
+        />
+      </h1>
+
       <Calendar onDateSelect={setSelectedDate} />
       {selectedDate && (
         <EventPopup date={selectedDate} onClose={() => setSelectedDate(null)} />

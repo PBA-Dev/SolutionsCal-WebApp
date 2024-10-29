@@ -67,7 +67,7 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect }) => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <button className="btn btn-outline-secondary" onClick={() => handleMonthChange(-1)}>Previous</button>
-        <h2>{format(currentDate, 'MMMM yyyy', { locale: de } )}</h2>
+        <h2 className="mx-auto">{format(currentDate, 'MMMM yyyy', { locale: de } )}</h2>
         <button className="btn btn-outline-secondary" onClick={() => handleMonthChange(1)}>Next</button>
       </div>
       <CalendarGrid>
